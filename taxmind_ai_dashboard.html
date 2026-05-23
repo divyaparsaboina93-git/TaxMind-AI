@@ -1,0 +1,1997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaxMind AI Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #020202;
+    --bg-soft: rgba(14, 14, 14, 0.88);
+    --panel: rgba(10, 10, 10, 0.82);
+    --panel-strong: rgba(18, 18, 18, 0.96);
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #f6f6f1;
+    --muted: rgba(255, 255, 255, 0.58);
+    --dim: rgba(255, 255, 255, 0.34);
+    --accent: #e6ff4a;
+    --accent-soft: rgba(230, 255, 74, 0.12);
+    --accent-line: rgba(230, 255, 74, 0.26);
+    --accent-glow: 0 0 28px rgba(230, 255, 74, 0.18);
+    --success: #78f5a0;
+    --danger: #ff7a7a;
+    --info: #78b8ff;
+    --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  body.theme-light {
+    --bg: #f5f6db;
+    --bg-soft: rgba(246, 247, 224, 0.92);
+    --panel: rgba(255, 255, 250, 0.8);
+    --panel-strong: rgba(252, 253, 236, 0.96);
+    --border: rgba(0, 0, 0, 0.08);
+    --text: #111111;
+    --muted: rgba(0, 0, 0, 0.62);
+    --dim: rgba(0, 0, 0, 0.42);
+    --accent: #99b400;
+    --accent-soft: rgba(153, 180, 0, 0.12);
+    --accent-line: rgba(153, 180, 0, 0.26);
+    --accent-glow: 0 0 28px rgba(153, 180, 0, 0.18);
+    --success: #0f9a51;
+    --danger: #cb3d3d;
+    --info: #1c67d9;
+    --shadow: 0 18px 60px rgba(145, 145, 113, 0.18);
+  }
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top right, rgba(230, 255, 74, 0.06), transparent 28%),
+      radial-gradient(circle at bottom left, rgba(230, 255, 74, 0.04), transparent 24%),
+      var(--bg);
+    color: var(--text);
+    font-family: "DM Sans", system-ui, sans-serif;
+    overflow-x: hidden;
+    overflow-y: auto;
+    transition: background 0.35s ease, color 0.35s ease;
+  }
+
+  button, input { font: inherit; }
+
+  canvas#bg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.95;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-height: 100vh;
+    align-items: stretch;
+  }
+
+  .sidebar {
+    width: 230px;
+    padding: 16px 12px;
+    background: rgba(4, 4, 4, 0.86);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  body.theme-light .sidebar { background: rgba(250, 251, 236, 0.86); }
+
+  .brand,
+  .profile,
+  .panel,
+  .stat-card,
+  .feature,
+  .tool-card,
+  .search-results,
+  .floating-panel,
+  .modal-card,
+  .drawer {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+
+  .brand,
+  .profile {
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)), var(--panel);
+  }
+
+  .brand-icon,
+  .avatar,
+  .chat-icon,
+  .stat-icon,
+  .feature-icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .brand-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: var(--accent);
+    color: #101010;
+    font-size: 20px;
+    font-weight: 800;
+    box-shadow: var(--accent-glow);
+  }
+
+  .brand-title {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+  }
+
+  .brand-title span,
+  .accent { color: var(--accent); }
+
+  .brand-sub {
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 4px;
+  }
+
+  .nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .nav button {
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 11px 12px;
+    background: transparent;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.22s ease;
+  }
+
+  .nav button:hover,
+  .nav button.active {
+    color: var(--text);
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+    transform: translateX(2px);
+  }
+
+  .profile {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #d2f842, #8aa308);
+    color: #0d0d0d;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .profile-name { font-size: 13px; font-weight: 700; }
+  .profile-role { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+  .main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(4, 4, 4, 0.74);
+    backdrop-filter: blur(18px);
+    z-index: 25;
+  }
+
+  body.theme-light header { background: rgba(252, 253, 236, 0.78); }
+
+  .title-box { min-width: 240px; }
+  .title { font-size: 23px; font-weight: 800; letter-spacing: -0.05em; }
+  .subtitle { margin-top: 6px; color: var(--muted); font-size: 12px; }
+
+  .search-shell {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .search-shell input {
+    width: 100%;
+    padding: 14px 48px 14px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    outline: none;
+  }
+
+  body.theme-light .search-shell input { background: rgba(255, 255, 255, 0.62); }
+
+  .search-shell input:focus {
+    border-color: var(--accent-line);
+    box-shadow: var(--accent-glow);
+  }
+
+  .search-launch {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #121212;
+    cursor: pointer;
+    font-weight: 800;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    z-index: 35;
+  }
+
+  .icon-btn,
+  .action-btn,
+  .pill-btn,
+  .tool-btn {
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  body.theme-light .icon-btn,
+  body.theme-light .action-btn,
+  body.theme-light .pill-btn,
+  body.theme-light .tool-btn { background: rgba(255, 255, 255, 0.56); }
+
+  .icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    font-size: 18px;
+  }
+
+  .icon-btn:hover,
+  .action-btn:hover,
+  .pill-btn:hover,
+  .tool-btn:hover {
+    border-color: var(--accent-line);
+    transform: translateY(-1px);
+    box-shadow: var(--accent-glow);
+  }
+
+  .body {
+    flex: 1;
+    overflow: visible;
+    padding: 20px 22px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .stats,
+  .features,
+  .tools-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .features { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tools-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .stat-card,
+  .feature,
+  .tool-card,
+  .panel {
+    border-radius: 20px;
+    padding: 16px;
+  }
+
+  .stat-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -20% -50% auto;
+    width: 110px;
+    height: 110px;
+    background: radial-gradient(circle, rgba(230, 255, 74, 0.14), transparent 72%);
+  }
+
+  .stat-top,
+  .feature-top,
+  .tool-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .stat-icon,
+  .feature-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+  }
+
+  .stat-value {
+    margin-top: 18px;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.06em;
+  }
+
+  .stat-label,
+  .feature-desc,
+  .tool-desc,
+  .tiny {
+    color: var(--muted);
+  }
+
+  .stat-label { margin-top: 4px; font-size: 12px; }
+
+  .stat-badge {
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent-line);
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(290px, 0.85fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .panel-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .panel-subtitle {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--dim);
+  }
+
+  .chat-panel {
+    min-height: 460px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .chat-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .chat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    color: var(--accent);
+    font-size: 20px;
+  }
+
+  .status-pill,
+  .pill-btn {
+    padding: 7px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+  }
+
+  .status-pill {
+    border: 1px solid rgba(120, 245, 160, 0.28);
+    background: rgba(120, 245, 160, 0.08);
+    color: var(--success);
+  }
+
+  .pill-btn {
+    color: var(--text);
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow: auto;
+    padding-right: 4px;
+    display: flex;
+    flex-direction: column;
+    min-height: 240px;
+    gap: 14px;
+  }
+
+  .message {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .message.user {
+    flex-direction: row-reverse;
+  }
+
+  .message-bubble {
+    max-width: min(86%, 720px);
+    padding: 13px 14px;
+    border-radius: 18px;
+    line-height: 1.65;
+    font-size: 13px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+  }
+
+  .message.user .message-bubble {
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+  }
+
+  .message-bubble strong { color: var(--text); }
+  .message-bubble ul { margin: 8px 0 0 18px; }
+  .message-bubble li { margin-bottom: 6px; }
+
+  .citation {
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 9px;
+    border-radius: 10px;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+  }
+
+  .typing {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .typing span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: bounce 1s infinite ease-in-out;
+  }
+
+  .typing span:nth-child(2) { animation-delay: 0.18s; }
+  .typing span:nth-child(3) { animation-delay: 0.36s; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); opacity: 0.42; }
+    50% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  .chat-input-row {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .chat-input-row input {
+    flex: 1;
+    padding: 14px 15px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    outline: none;
+  }
+
+  body.theme-light .chat-input-row input { background: rgba(255, 255, 255, 0.62); }
+
+  .action-btn {
+    min-width: 118px;
+    padding: 0 16px;
+    border-radius: 16px;
+    font-weight: 700;
+  }
+
+  .action-btn.primary {
+    background: var(--accent);
+    color: #101010;
+    border-color: transparent;
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .list,
+  .doc-list,
+  .alert-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .doc-item,
+  .alert-item,
+  .check-item,
+  .search-item {
+    padding: 12px;
+    border-radius: 15px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .check-item.done {
+    border-color: rgba(120, 245, 160, 0.28);
+    background: rgba(120, 245, 160, 0.07);
+  }
+
+  .check-item.pending {
+    border-color: rgba(255, 122, 122, 0.18);
+  }
+
+  .section-label {
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 10px;
+  }
+
+  .tool-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .tool-title {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .tool-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tool-btn {
+    padding: 11px 14px;
+    border-radius: 14px;
+    font-weight: 600;
+  }
+
+  .feature-title { font-size: 14px; font-weight: 700; }
+  .feature-desc,
+  .tool-desc { font-size: 12px; line-height: 1.6; margin-top: 6px; }
+
+  .search-results,
+  .floating-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 12px);
+    width: min(360px, calc(100vw - 40px));
+    border-radius: 18px;
+    padding: 14px;
+    display: none;
+    z-index: 120;
+    max-height: min(70vh, 520px);
+    overflow-y: auto;
+  }
+
+  .search-results.show,
+  .floating-panel.show {
+    display: block;
+  }
+
+  .search-item {
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .search-item:hover {
+    border-color: var(--accent-line);
+    transform: translateY(-1px);
+  }
+
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: -420px;
+    width: min(400px, 100vw);
+    height: 100vh;
+    padding: 22px;
+    z-index: 80;
+    transition: right 0.28s ease;
+    background: var(--panel-strong);
+    overflow-y: auto;
+    backdrop-filter: none;
+  }
+
+  .drawer.show { right: 0; }
+
+  .overlay,
+  .modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    z-index: 60;
+  }
+
+  .overlay.show,
+  .modal.show {
+    display: block;
+  }
+
+  .overlay {
+    background: rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(5px);
+  }
+
+  .modal {
+    background: rgba(0, 0, 0, 0.52);
+    padding: 24px;
+    overflow: auto;
+    z-index: 100;
+  }
+
+  .modal-card {
+    width: min(560px, 100%);
+    margin: 4vh auto;
+    border-radius: 24px;
+    padding: 22px;
+    background: var(--panel-strong);
+    position: relative;
+    z-index: 101;
+  }
+
+  .upload-zone {
+    margin-top: 16px;
+    border: 1.5px dashed var(--accent-line);
+    border-radius: 22px;
+    padding: 34px 20px;
+    text-align: center;
+    background:
+      radial-gradient(circle at top center, rgba(230, 255, 74, 0.08), transparent 52%),
+      rgba(255, 255, 255, 0.025);
+  }
+
+  .upload-arrow {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 14px;
+    border-radius: 20px;
+    display: grid;
+    place-items: center;
+    background: var(--accent);
+    color: #0e0e0e;
+    font-size: 34px;
+    font-weight: 900;
+    box-shadow: var(--accent-glow);
+  }
+
+  .hidden-input { display: none; }
+
+  .upload-files {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .file-chip,
+  .toast {
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .file-chip {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    color: var(--text);
+  }
+
+  .toast-wrap {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 60;
+  }
+
+  .toast {
+    min-width: 220px;
+    max-width: 360px;
+    background: var(--panel-strong);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+
+  .toast strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+
+  .muted { color: var(--muted); }
+  .tiny { font-size: 11px; }
+  .mt8 { margin-top: 8px; }
+  .mt12 { margin-top: 12px; }
+
+  @media (max-width: 1220px) {
+    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .features,
+    .tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .workspace { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 860px) {
+    body {
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    .app { flex-direction: column; }
+    .sidebar {
+      width: 100%;
+      min-height: auto;
+    }
+    .nav {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    header {
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .title-box,
+    .search-shell { width: 100%; }
+    .header-actions { margin-left: auto; }
+    .stats,
+    .features,
+    .tools-grid { grid-template-columns: 1fr; }
+    .chat-input-row {
+      flex-direction: column;
+    }
+    .action-btn { min-height: 48px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">&#9889;</div>
+      <div>
+        <div class="brand-title">Tax<span>Mind</span> AI</div>
+        <div class="brand-sub">Legal and tax research workspace</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="profile">
+      <div class="avatar">AR</div>
+      <div>
+        <div class="profile-name">Arjun Rao</div>
+        <div class="profile-role">Tax Counsel</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header>
+      <div class="title-box">
+        <div class="title">Tax<span class="accent">Mind</span> AI</div>
+        <div class="subtitle">RAG-style dashboard with upload, research, clause review, and compliance actions</div>
+      </div>
+      <div class="search-shell">
+        <input id="searchInput" type="text" placeholder="Search sections, tools, files, clauses, or type a GST question">
+        <button class="search-launch" id="searchBtn">&#8594;</button>
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="headerSearchBtn" title="Open search">&#128269;</button>
+        <button class="icon-btn" id="notificationBtn" title="Notifications">&#128276;</button>
+        <button class="icon-btn" id="themeBtn" title="Switch theme">&#9788;</button>
+        <div class="floating-panel" id="notificationPanel"></div>
+      </div>
+    </header>
+
+    <section class="body">
+      <section class="stats" id="stats"></section>
+
+      <section class="workspace">
+        <div class="panel chat-panel" id="chatSection">
+          <div class="chat-head">
+            <div class="chat-title-wrap">
+              <div class="chat-icon">&#10024;</div>
+              <div>
+                <div class="panel-title">AI Research Assistant</div>
+                <div class="panel-subtitle">Ask GST and tax-document questions and get grounded answers with citations</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <button class="pill-btn" id="clearChatBtn">Clear chat</button>
+              <span class="status-pill">Online</span>
+            </div>
+          </div>
+          <div class="chat-messages" id="messages"></div>
+          <div class="chat-input-row">
+            <input id="chatInput" type="text" placeholder="Ask about GST late fee, Section 47, interest, returns, uploaded files, or compliance">
+            <button class="action-btn primary" id="sendBtn">Ask AI</button>
+          </div>
+        </div>
+
+        <div class="stack">
+          <section class="panel" id="documentPanel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Document Workspace</div>
+                <div class="panel-subtitle">Uploaded documents and highlighted excerpts</div>
+              </div>
+              <button class="pill-btn" id="openUploadBtn">Upload</button>
+            </div>
+            <div class="section-label">Loaded Documents</div>
+            <div class="doc-list" id="documentList"></div>
+            <div class="section-label mt12">Current Highlight</div>
+            <div class="doc-item" id="highlightBox"></div>
+          </section>
+
+          <section class="panel" id="checklistSection">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Compliance Checklist</div>
+                <div class="panel-subtitle">Track monthly GST filing readiness</div>
+              </div>
+              <span class="status-pill" id="checklistProgress">0% done</span>
+            </div>
+            <div class="list" id="checklist"></div>
+          </section>
+
+          <section class="panel" id="alertsSection">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Risk Alerts</div>
+                <div class="panel-subtitle">Recent issues flagged by the assistant</div>
+              </div>
+            </div>
+            <div class="alert-list" id="alerts"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="toolsSection">
+        <div class="section-label">Working Tools</div>
+        <div class="tools-grid" id="toolsGrid"></div>
+      </section>
+
+      <section id="featuresSection">
+        <div class="section-label">Platform Features</div>
+        <div class="features" id="features"></div>
+      </section>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<aside class="drawer" id="actionDrawer">
+  <div class="panel-head">
+    <div>
+      <div class="panel-title" id="drawerTitle">Details</div>
+      <div class="panel-subtitle" id="drawerSubtitle">Action details will appear here</div>
+    </div>
+    <button class="icon-btn" id="closeDrawerBtn">&#10005;</button>
+  </div>
+  <div id="drawerContent"></div>
+</aside>
+
+<div class="modal" id="uploadModal">
+  <div class="modal-card">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">Upload Documents</div>
+        <div class="panel-subtitle">Choose PDF, DOCX, XLSX, or TXT files for analysis</div>
+      </div>
+      <button class="icon-btn" id="closeUploadBtn">&#10005;</button>
+    </div>
+    <div class="upload-zone">
+      <div class="upload-arrow">&#8682;</div>
+      <div class="panel-title" style="font-size:18px;">Drop files here or click below</div>
+      <div class="muted mt8">Upload files to update the document panel, search, and AI responses.</div>
+      <input class="hidden-input" id="fileInput" type="file" multiple accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.csv">
+      <button class="action-btn primary mt12" id="chooseFilesBtn">Choose Files</button>
+      <div class="upload-files" id="uploadFiles"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+  const state = {
+    activeNav: "dashboard",
+    theme: "dark",
+    activeDocumentIndex: 0,
+    uploadedFiles: [],
+    searchResults: [],
+    notifications: [
+      { title: "Reminder", text: "GSTR-3B due in 2 days. Review pending compliance items.", type: "warning" },
+      { title: "Research Ready", text: "CGST Act 2017 reference pack is loaded and searchable.", type: "info" },
+      { title: "Upload Tip", text: "Use Upload Documents to add client notices or assessments.", type: "success" }
+    ],
+    stats: [
+      { id: "documents", label: "Documents Uploaded", value: "1", badge: "Workspace live", icon: "&#128196;" },
+      { id: "questions", label: "Questions Asked", value: "1", badge: "Live assistant", icon: "&#128172;" },
+      { id: "score", label: "Compliance Score", value: "82%", badge: "Healthy", icon: "&#9989;" },
+      { id: "alerts", label: "Risk Alerts", value: "3", badge: "Needs attention", icon: "&#9888;" },
+      { id: "sources", label: "Sources Found", value: "7", badge: "Citations ready", icon: "&#128214;" }
+    ],
+    documents: [
+      {
+        name: "CGST Act, 2017.pdf",
+        type: "Primary law",
+        size: "2.4 MB",
+        pages: 320,
+        summary: "Primary statutory reference used for GST return, late fee, and interest queries.",
+        excerpt: "Section 47 covers levy of late fee for delayed furnishing of returns. Section 50 covers interest on delayed payment of tax.",
+        clauses: ["Section 39 - Returns", "Section 44 - Annual Return", "Section 47 - Late Fee", "Section 50 - Interest"],
+        content: "CGST Act 2017. Section 39 covers returns. Section 44 covers annual return. Section 47 covers levy of late fee for delayed furnishing of returns. Section 50 covers interest on delayed payment of tax at 18 percent per annum.",
+        parseStatus: "ready"
+      }
+    ],
+    checklist: [
+      { label: "GSTR-1 Filing", done: true },
+      { label: "GSTR-3B Filing", done: true },
+      { label: "Late Fee Verification", done: false },
+      { label: "Interest Review under Section 50", done: false },
+      { label: "Input Tax Credit Reconciliation", done: true },
+      { label: "Annual Return Planning", done: true }
+    ],
+    alerts: [
+      { title: "Late fee exposure", text: "Two pending returns can attract daily late fees until filing is completed." },
+      { title: "Interest check", text: "Outstanding tax liability may carry 18% per annum interest from the due date." },
+      { title: "Documentation gap", text: "No client notice or return working file has been uploaded yet." }
+    ]
+  };
+
+  const navItems = [
+    { id: "dashboard", icon: "&#8862;", label: "Dashboard", action: () => scrollToSection("stats") },
+    { id: "upload", icon: "&#8679;", label: "Upload Documents", action: () => openUploadModal() },
+    { id: "chat", icon: "&#128172;", label: "AI Research Assistant", action: () => scrollToSection("chatSection") },
+    { id: "clause", icon: "&#128214;", label: "Clause Explorer", action: () => showClauseExplorer() },
+    { id: "comp", icon: "&#9745;", label: "Compliance Checklist", action: () => scrollToSection("checklistSection") },
+    { id: "compare", icon: "&#8644;", label: "Document Comparison", action: () => openComparisonTool() },
+    { id: "risk", icon: "&#9888;", label: "Risk Analysis", action: () => openRiskTool() },
+    { id: "insights", icon: "&#128202;", label: "Insights and Reports", action: () => openInsightsTool() },
+    { id: "history", icon: "&#128338;", label: "History", action: () => openHistoryTool() },
+    { id: "settings", icon: "&#9881;", label: "Settings", action: () => openSettingsTool() }
+  ];
+
+  const toolCards = [
+    {
+      id: "summarize",
+      title: "Summarize Document",
+      desc: "Generate a concise summary from the currently selected document.",
+      btn: "Run Summary",
+      action: () => {
+        const doc = getActiveDocument();
+        openDrawer("Document Summary", "A quick summary of the active file", `
+          <div class="doc-item">
+            <strong>${escapeHtml(doc.name)}</strong>
+            <div class="muted mt8">${escapeHtml(doc.summary)}</div>
+            <div class="tiny mt8">Focus: ${escapeHtml(doc.clauses.join(", "))}</div>
+          </div>
+        `);
+      }
+    },
+    {
+      id: "clauses",
+      title: "Extract Key Clauses",
+      desc: "Open important statutory sections found in the active material.",
+      btn: "View Clauses",
+      action: () => showClauseExplorer()
+    },
+    {
+      id: "checklist",
+      title: "Generate Checklist",
+      desc: "Turn the current matter into a concrete compliance action plan.",
+      btn: "Build Checklist",
+      action: () => {
+        scrollToSection("checklistSection");
+        notify("Checklist updated", "The GST filing checklist is now ready to review.");
+      }
+    },
+    {
+      id: "compare",
+      title: "Compare Documents",
+      desc: "Compare old and new notices, agreements, or draft responses.",
+      btn: "Compare Now",
+      action: () => openComparisonTool()
+    },
+    {
+      id: "risk",
+      title: "Risk Analysis",
+      desc: "Surface filing, payment, and evidence risks from the record.",
+      btn: "Open Risks",
+      action: () => openRiskTool()
+    },
+    {
+      id: "report",
+      title: "Generate Report",
+      desc: "Prepare an internal summary for client or management review.",
+      btn: "Create Report",
+      action: () => openInsightsTool()
+    }
+  ];
+
+  const features = [
+    { icon: "&#9889;", title: "Grounded Answers", desc: "Responses use a small legal knowledge base plus uploaded document context instead of one generic reply." },
+    { icon: "&#128269;", title: "Working Search", desc: "Search can jump to tools, sections, files, and even trigger a research answer." },
+    { icon: "&#128276;", title: "Live Notifications", desc: "Notifications open, count pending reminders, and can be marked as read." },
+    { icon: "&#9788;", title: "Theme Toggle", desc: "Switch between deep black and a light document-review theme." },
+    { icon: "&#8679;", title: "Real Upload Flow", desc: "Upload opens a modal with an arrow prompt and updates the document workspace." },
+    { icon: "&#128214;", title: "Clause Navigation", desc: "Important sections open in a side drawer with summaries and next actions." }
+  ];
+
+  const knowledgeBase = [
+    {
+      match: ["late filing", "late fee", "gst return", "gstr-3b", "gstr-1", "penalty"],
+      answer: `
+        <strong>Late filing of GST returns generally attracts a late fee plus possible interest.</strong>
+        <ul>
+          <li>For return filing delay, late fee is commonly applied under Section 47.</li>
+          <li>The standard operational amounts often used are <strong>Rs. 50 per day</strong> for normal returns and <strong>Rs. 20 per day</strong> for nil returns, subject to notification-based relief and caps.</li>
+          <li>If tax itself is unpaid, <strong>interest under Section 50</strong> may apply at <strong>18% per annum</strong> from the due date until payment.</li>
+        </ul>
+        <div class="citation">Source: Section 47 and Section 50, CGST Act 2017</div>
+      `
+    },
+    {
+      match: ["section 47", "levy of late fee"],
+      answer: `
+        <strong>Section 47 deals with late fee for delayed filing of returns.</strong>
+        <div class="mt8">It empowers levy of late fee when required GST returns are not furnished by the due date. In practice, the actual payable amount can change because notifications and relief measures often reduce the amount otherwise stated in the Act.</div>
+        <div class="citation">Source: Section 47, CGST Act 2017</div>
+      `
+    },
+    {
+      match: ["section 50", "interest", "delayed payment", "outstanding tax"],
+      answer: `
+        <strong>Section 50 addresses interest on delayed payment of tax.</strong>
+        <ul>
+          <li>Interest applies when tax is paid after the due date.</li>
+          <li>The commonly cited rate is <strong>18% per annum</strong> for delayed payment.</li>
+          <li>Interest is separate from late fee, so both can apply in the same case if filing and payment are both delayed.</li>
+        </ul>
+        <div class="citation">Source: Section 50, CGST Act 2017</div>
+      `
+    },
+    {
+      match: ["annual return", "gstr-9"],
+      answer: `
+        <strong>GSTR-9 is the annual return requirement for eligible registered persons.</strong>
+        <div class="mt8">Use it to reconcile outward supplies, inward supplies, tax paid, input tax credit, and adjustments across the financial year. Review turnover thresholds and exemptions before filing.</div>
+        <div class="citation">Source: Section 44, CGST Act 2017</div>
+      `
+    },
+    {
+      match: ["input tax credit", "itc", "reconciliation"],
+      answer: `
+        <strong>Input Tax Credit review should focus on invoice matching, vendor filing behavior, and blocked credits.</strong>
+        <ul>
+          <li>Reconcile purchase registers with GSTR-2B or relevant statements.</li>
+          <li>Check time limits, vendor compliance, and restriction categories before claiming.</li>
+          <li>Maintain invoice support and payment evidence for future scrutiny.</li>
+        </ul>
+        <div class="citation">Source: Practical GST compliance workflow</div>
+      `
+    }
+  ];
+
+  const starterMessages = [
+    { role: "user", html: "What is the penalty for late filing of GST return?" },
+    {
+      role: "ai",
+      html: `
+        <strong>Late filing of a GST return can trigger two different consequences.</strong>
+        <ul>
+          <li><strong>Late fee</strong> for delay in furnishing the return, generally addressed under Section 47.</li>
+          <li><strong>Interest</strong> on delayed payment of tax, generally addressed under Section 50.</li>
+        </ul>
+        <div class="citation">Source: Section 47 and Section 50, CGST Act 2017</div>
+      `
+    }
+  ];
+
+  const bgCanvas = document.getElementById("bg");
+  const ctx = bgCanvas.getContext("2d");
+  let nodes = [];
+
+  function resizeCanvas() {
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+    const nodeCount = Math.max(42, Math.floor(window.innerWidth / 28));
+    if (!nodes.length || Math.abs(nodes.length - nodeCount) > 12) {
+      nodes = Array.from({ length: nodeCount }, () => ({
+        x: Math.random() * bgCanvas.width,
+        y: Math.random() * bgCanvas.height,
+        vx: (Math.random() - 0.5) * 0.18,
+        vy: (Math.random() - 0.5) * 0.18,
+        radius: Math.random() * 1.9 + 1.2
+      }));
+    }
+  }
+
+  function drawBackground() {
+    ctx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+    for (const node of nodes) {
+      node.x += node.vx;
+      node.y += node.vy;
+      if (node.x < -20 || node.x > bgCanvas.width + 20) node.vx *= -1;
+      if (node.y < -20 || node.y > bgCanvas.height + 20) node.vy *= -1;
+    }
+
+    for (let i = 0; i < nodes.length; i += 1) {
+      for (let j = i + 1; j < nodes.length; j += 1) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const distance = Math.hypot(dx, dy);
+        if (distance < 170) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(230, 255, 74, ${0.14 * (1 - distance / 170)})`;
+          ctx.lineWidth = 0.8;
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    for (const node of nodes) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(230, 255, 74, 0.88)";
+      ctx.shadowBlur = 16;
+      ctx.shadowColor = "rgba(230, 255, 74, 0.55)";
+      ctx.fill();
+    }
+
+    ctx.shadowBlur = 0;
+    requestAnimationFrame(drawBackground);
+  }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[char]));
+  }
+
+  function renderNav() {
+    const nav = document.getElementById("nav");
+    nav.innerHTML = navItems.map((item) => `
+      <button class="${state.activeNav === item.id ? "active" : ""}" data-nav="${item.id}">
+        <span>${item.icon}</span>
+        <span>${escapeHtml(item.label)}</span>
+      </button>
+    `).join("");
+  }
+
+  function renderStats() {
+    document.getElementById("stats").innerHTML = state.stats.map((item) => `
+      <div class="stat-card" id="stat-${escapeHtml(item.id)}">
+        <div class="stat-top">
+          <div class="stat-icon">${item.icon}</div>
+          <div class="tiny muted">Live</div>
+        </div>
+        <div class="stat-value">${escapeHtml(item.value)}</div>
+        <div class="stat-label">${escapeHtml(item.label)}</div>
+        <div class="stat-badge">${escapeHtml(item.badge)}</div>
+      </div>
+    `).join("");
+  }
+
+  function renderDocuments() {
+    document.getElementById("documentList").innerHTML = state.documents.map((doc, index) => `
+      <div class="doc-item">
+        <strong>${escapeHtml(doc.name)}</strong>
+        <div class="tiny mt8">${escapeHtml(doc.type)} | ${escapeHtml(doc.size)} | ${doc.pages} pages</div>
+        <div class="muted mt8">${escapeHtml(doc.summary)}</div>
+        <div class="tool-actions mt12">
+          <button class="tool-btn" data-doc-action="view" data-doc-index="${index}">View clauses</button>
+          <button class="tool-btn" data-doc-action="highlight" data-doc-index="${index}">Make active</button>
+        </div>
+      </div>
+    `).join("");
+
+    const doc = state.documents[state.activeDocumentIndex] || state.documents[0];
+    document.getElementById("highlightBox").innerHTML = `
+      <strong>${escapeHtml(doc.name)}</strong>
+      <div class="muted mt8">${escapeHtml(doc.excerpt)}</div>
+      <div class="tiny mt8">Key sections: ${escapeHtml(doc.clauses.join(", "))}</div>
+      <div class="tiny mt8">AI focus: ${doc.parseStatus === "ready" ? "Content loaded for answers" : "Metadata only"}</div>
+    `;
+  }
+
+  function renderChecklist() {
+    const doneCount = state.checklist.filter((item) => item.done).length;
+    const percent = Math.round((doneCount / state.checklist.length) * 100);
+    document.getElementById("checklistProgress").textContent = `${percent}% done`;
+    document.getElementById("checklist").innerHTML = state.checklist.map((item, index) => `
+      <div class="check-item ${item.done ? "done" : "pending"}">
+        <div>
+          <strong>${item.done ? "Complete" : "Pending"}</strong>
+          <div class="tiny mt8">${escapeHtml(item.label)}</div>
+        </div>
+        <button class="tool-btn" data-check-index="${index}">
+          ${item.done ? "Undo" : "Mark done"}
+        </button>
+      </div>
+    `).join("");
+  }
+
+  function renderAlerts() {
+    document.getElementById("alerts").innerHTML = state.alerts.map((alert) => `
+      <div class="alert-item">
+        <strong>${escapeHtml(alert.title)}</strong>
+        <div class="muted mt8">${escapeHtml(alert.text)}</div>
+      </div>
+    `).join("");
+    updateStat("alerts", String(state.alerts.length));
+  }
+
+  function renderTools() {
+    document.getElementById("toolsGrid").innerHTML = toolCards.map((tool) => `
+      <div class="tool-card">
+        <div class="tool-top">
+          <div class="tool-title">${escapeHtml(tool.title)}</div>
+        </div>
+        <div class="tool-desc">${escapeHtml(tool.desc)}</div>
+        <div class="tool-actions">
+          <button class="tool-btn" data-tool="${tool.id}">${escapeHtml(tool.btn)}</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function renderFeatures() {
+    document.getElementById("features").innerHTML = features.map((feature) => `
+      <div class="feature">
+        <div class="feature-top">
+          <div class="feature-icon">${feature.icon}</div>
+          <span class="tiny muted">Enabled</span>
+        </div>
+        <div class="feature-title mt12">${escapeHtml(feature.title)}</div>
+        <div class="feature-desc">${escapeHtml(feature.desc)}</div>
+      </div>
+    `).join("");
+  }
+
+  function renderNotifications() {
+    const panel = document.getElementById("notificationPanel");
+    if (!state.notifications.length) {
+      panel.innerHTML = `<div class="tiny">No new notifications.</div>`;
+      return;
+    }
+
+    panel.innerHTML = `
+      <div class="panel-title" style="font-size:14px;">Notifications</div>
+      <div class="panel-subtitle">Click a notification to mark it as read</div>
+      <div class="list mt12">
+        ${state.notifications.map((item, index) => `
+          <div class="search-item" data-notification-index="${index}">
+            <strong>${escapeHtml(item.title)}</strong>
+            <div class="muted mt8">${escapeHtml(item.text)}</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function renderSearchResults(items, query) {
+    const box = document.getElementById("searchResults");
+    if (!items.length) {
+      box.innerHTML = `
+        <div class="panel-title" style="font-size:14px;">No direct matches</div>
+        <div class="muted mt8">Press Enter or click the arrow to ask the AI assistant about "${escapeHtml(query)}".</div>
+      `;
+      box.classList.add("show");
+      return;
+    }
+
+    box.innerHTML = `
+      <div class="panel-title" style="font-size:14px;">Search Results</div>
+      <div class="panel-subtitle">Open a section or tool directly</div>
+      <div class="list mt12">
+        ${items.map((item) => `
+          <div class="search-item" data-search-kind="${escapeHtml(item.kind)}" data-search-id="${escapeHtml(item.id)}">
+            <strong>${escapeHtml(item.title)}</strong>
+            <div class="muted mt8">${escapeHtml(item.text)}</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+    box.classList.add("show");
+  }
+
+  function addMessage(role, html) {
+    const container = document.getElementById("messages");
+    const item = document.createElement("div");
+    item.className = `message ${role === "user" ? "user" : ""}`;
+    item.innerHTML = role === "ai"
+      ? `<div class="chat-icon">&#10024;</div><div class="message-bubble">${html}</div>`
+      : `<div class="message-bubble">${html}</div>`;
+    container.appendChild(item);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function seedMessages() {
+    const container = document.getElementById("messages");
+    container.innerHTML = "";
+    starterMessages.forEach((message) => addMessage(message.role, message.html));
+  }
+
+  function addTyping() {
+    const container = document.getElementById("messages");
+    const item = document.createElement("div");
+    item.className = "message";
+    item.id = "typingMessage";
+    item.innerHTML = `
+      <div class="chat-icon">&#10024;</div>
+      <div class="message-bubble">
+        <div class="typing"><span></span><span></span><span></span></div>
+      </div>
+    `;
+    container.appendChild(item);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function removeTyping() {
+    const typing = document.getElementById("typingMessage");
+    if (typing) typing.remove();
+  }
+
+  function getActiveDocument() {
+    return state.documents[state.activeDocumentIndex] || state.documents[0];
+  }
+
+  function readFileAsText(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => resolve("");
+      reader.readAsText(file);
+    });
+  }
+
+  function normalizeDocText(text) {
+    return String(text || "").replace(/\s+/g, " ").trim();
+  }
+
+  function createDocumentSummary(text, fileName) {
+    const clean = normalizeDocText(text);
+    if (!clean) {
+      return {
+        summary: `${fileName} was uploaded. This file type could not be fully read in the browser-only demo, so the AI will answer from filename and metadata.`,
+        excerpt: "The file is available in the workspace, but its full text was not extracted in this static version.",
+        clauses: ["Uploaded file overview", "Filename captured", "Manual review suggested"],
+        parseStatus: "metadata-only",
+        content: ""
+      };
+    }
+
+    const short = clean.slice(0, 1200);
+    const sentences = short.split(/(?<=[.!?])\s+/).filter(Boolean);
+    const summary = sentences.slice(0, 2).join(" ").slice(0, 260) || short.slice(0, 260);
+    const excerpt = sentences.slice(0, 3).join(" ").slice(0, 420) || short.slice(0, 420);
+    const words = [...new Set(clean.match(/[A-Za-z][A-Za-z-]{3,}/g) || [])]
+      .filter((word) => !["this", "that", "with", "from", "have", "will", "your", "into", "were", "been", "which", "shall", "under"].includes(word.toLowerCase()))
+      .slice(0, 3);
+
+    return {
+      summary: summary || `${fileName} uploaded and indexed for AI answers.`,
+      excerpt: excerpt || "Uploaded file content is now available to the assistant.",
+      clauses: words.length ? words.map((word) => `Topic: ${word}`) : ["Uploaded content", "Extracted text", "Review ready"],
+      parseStatus: "ready",
+      content: clean
+    };
+  }
+
+  function findRelevantSnippet(content, question) {
+    const cleanContent = normalizeDocText(content);
+    if (!cleanContent) return "";
+
+    const terms = question.toLowerCase().match(/[a-z0-9]{4,}/g) || [];
+    const sentences = cleanContent.split(/(?<=[.!?])\s+/).filter(Boolean);
+    let bestSentence = "";
+    let bestScore = 0;
+
+    sentences.forEach((sentence) => {
+      const lower = sentence.toLowerCase();
+      const score = terms.reduce((total, term) => total + (lower.includes(term) ? 1 : 0), 0);
+      if (score > bestScore) {
+        bestScore = score;
+        bestSentence = sentence;
+      }
+    });
+
+    return bestSentence || sentences[0] || cleanContent.slice(0, 240);
+  }
+
+  function askAssistant(question) {
+    const cleaned = question.trim();
+    if (!cleaned) return;
+    addMessage("user", escapeHtml(cleaned));
+    addTyping();
+
+    setTimeout(() => {
+      removeTyping();
+      addMessage("ai", buildAnswer(cleaned));
+      updateStat("questions", String(Number(state.stats.find((item) => item.id === "questions").value) + 1));
+    }, 750);
+  }
+
+  function buildAnswer(question) {
+    const normalized = question.toLowerCase();
+    const activeDoc = getActiveDocument();
+    const fileNameMentioned = state.documents.find((doc) => normalized.includes(doc.name.toLowerCase()));
+
+    if (fileNameMentioned && fileNameMentioned.content) {
+      const snippet = findRelevantSnippet(fileNameMentioned.content, question);
+      return `
+        <strong>Based on ${escapeHtml(fileNameMentioned.name)}, here is the closest matching part.</strong>
+        <div class="mt8">${escapeHtml(snippet)}</div>
+        <div class="citation">Source: Uploaded document text</div>
+      `;
+    }
+
+    if (state.uploadedFiles.length && activeDoc && activeDoc.content) {
+      const snippet = findRelevantSnippet(activeDoc.content, question);
+      if (snippet) {
+        return `
+          <strong>I checked the active uploaded document: ${escapeHtml(activeDoc.name)}</strong>
+          <div class="mt8">${escapeHtml(snippet)}</div>
+          <div class="mt8">If you want a better answer, ask about a specific clause, paragraph, date, amount, or name from this file.</div>
+          <div class="citation">Source: Active uploaded document</div>
+        `;
+      }
+    }
+
+    if (normalized.includes("uploaded") || normalized.includes("document") || normalized.includes("file")) {
+      const fileSummary = state.documents.map((doc) => `${doc.name} (${doc.type})`).join(", ");
+      return `
+        <strong>Here is the current document workspace status.</strong>
+        <ul>
+          <li>Loaded files: ${escapeHtml(fileSummary)}</li>
+          <li>Main focus document: <strong>${escapeHtml(activeDoc.name)}</strong></li>
+          <li>AI status: <strong>${activeDoc.parseStatus === "ready" ? "document text loaded" : "metadata only"}</strong></li>
+        </ul>
+        <div class="citation">Source: Current dashboard document state</div>
+      `;
+    }
+
+    const matched = knowledgeBase.find((entry) => entry.match.some((term) => normalized.includes(term)));
+    if (matched) return matched.answer;
+
+    return `
+      <strong>I could not find a strong direct match in the current GST knowledge pack.</strong>
+      <div class="mt8">Try asking with one of these terms for a better answer: Section 47, Section 50, GSTR-3B, annual return, ITC, late fee, or uploaded documents.</div>
+      <div class="citation">Source: TaxMind AI fallback guidance</div>
+    `;
+  }
+
+  function performSearch() {
+    const query = document.getElementById("searchInput").value.trim();
+    if (!query) {
+      hideSearchResults();
+      return;
+    }
+
+    const normalized = query.toLowerCase();
+    const results = [];
+
+    navItems.forEach((item) => {
+      if (item.label.toLowerCase().includes(normalized)) {
+        results.push({ kind: "nav", id: item.id, title: item.label, text: "Open this dashboard section" });
+      }
+    });
+
+    toolCards.forEach((tool) => {
+      if (tool.title.toLowerCase().includes(normalized) || tool.desc.toLowerCase().includes(normalized)) {
+        results.push({ kind: "tool", id: tool.id, title: tool.title, text: tool.desc });
+      }
+    });
+
+    state.documents.forEach((doc, index) => {
+      if (`${doc.name} ${doc.summary} ${doc.excerpt}`.toLowerCase().includes(normalized)) {
+        results.push({ kind: "document", id: String(index), title: doc.name, text: doc.summary });
+      }
+    });
+
+    state.searchResults = results;
+    renderSearchResults(results.slice(0, 6), query);
+  }
+
+  function hideSearchResults() {
+    document.getElementById("searchResults").classList.remove("show");
+  }
+
+  function updateStat(id, value) {
+    const stat = state.stats.find((item) => item.id === id);
+    if (stat) {
+      stat.value = value;
+      renderStats();
+    }
+  }
+
+  function notify(title, text) {
+    const wrap = document.getElementById("toastWrap");
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerHTML = `<strong>${escapeHtml(title)}</strong><div>${escapeHtml(text)}</div>`;
+    wrap.appendChild(toast);
+    setTimeout(() => toast.remove(), 3200);
+  }
+
+  function openUploadModal() {
+    document.getElementById("overlay").classList.add("show");
+    document.getElementById("uploadModal").classList.add("show");
+    hideNotificationPanel();
+  }
+
+  function closeUploadModal() {
+    document.getElementById("uploadModal").classList.remove("show");
+    if (!document.getElementById("actionDrawer").classList.contains("show")) {
+      document.getElementById("overlay").classList.remove("show");
+    }
+  }
+
+  function openDrawer(title, subtitle, contentHtml) {
+    document.getElementById("drawerTitle").textContent = title;
+    document.getElementById("drawerSubtitle").textContent = subtitle;
+    document.getElementById("drawerContent").innerHTML = contentHtml;
+    document.getElementById("actionDrawer").classList.add("show");
+    document.getElementById("overlay").classList.add("show");
+    hideNotificationPanel();
+    hideSearchResults();
+  }
+
+  function closeDrawer() {
+    document.getElementById("actionDrawer").classList.remove("show");
+    if (!document.getElementById("uploadModal").classList.contains("show")) {
+      document.getElementById("overlay").classList.remove("show");
+    }
+  }
+
+  function hideNotificationPanel() {
+    document.getElementById("notificationPanel").classList.remove("show");
+  }
+
+  function toggleNotificationPanel() {
+    renderNotifications();
+    document.getElementById("notificationPanel").classList.toggle("show");
+    hideSearchResults();
+  }
+
+  function toggleTheme() {
+    state.theme = state.theme === "dark" ? "light" : "dark";
+    document.body.classList.toggle("theme-light", state.theme === "light");
+    document.getElementById("themeBtn").innerHTML = state.theme === "light" ? "&#9790;" : "&#9788;";
+    notify("Theme switched", state.theme === "light" ? "Light review theme enabled." : "Dark dashboard theme enabled.");
+  }
+
+  function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    closeDrawer();
+    closeUploadModal();
+    hideSearchResults();
+    hideNotificationPanel();
+  }
+
+  function showClauseExplorer(docIndex = 0) {
+    const doc = state.documents[docIndex];
+    openDrawer("Clause Explorer", "Important sections from the active document", `
+      <div class="list">
+        ${doc.clauses.map((clause) => `
+          <div class="doc-item">
+            <strong>${escapeHtml(clause)}</strong>
+            <div class="muted mt8">${escapeHtml(doc.excerpt)}</div>
+          </div>
+        `).join("")}
+      </div>
+    `);
+  }
+
+  function openComparisonTool() {
+    openDrawer("Document Comparison", "Compare old and new versions", `
+      <div class="doc-item">
+        <strong>Comparison workspace is ready.</strong>
+        <div class="muted mt8">Upload at least two files to compare clauses, notices, or draft responses side by side.</div>
+        <div class="tool-actions mt12">
+          <button class="tool-btn" id="compareUploadShortcut">Upload comparison files</button>
+        </div>
+      </div>
+    `);
+  }
+
+  function openRiskTool() {
+    openDrawer("Risk Analysis", "Current GST filing and payment risks", `
+      <div class="list">
+        ${state.alerts.map((alert) => `
+          <div class="alert-item">
+            <strong>${escapeHtml(alert.title)}</strong>
+            <div class="muted mt8">${escapeHtml(alert.text)}</div>
+          </div>
+        `).join("")}
+      </div>
+    `);
+  }
+
+  function openInsightsTool() {
+    openDrawer("Insights and Reports", "Operational summary generated from current data", `
+      <div class="doc-item">
+        <strong>Current report snapshot</strong>
+        <ul class="mt8">
+          <li>${escapeHtml(state.stats.find((item) => item.id === "documents").value)} document(s) loaded into the workspace</li>
+          <li>${escapeHtml(state.stats.find((item) => item.id === "questions").value)} research question(s) asked</li>
+          <li>${escapeHtml(state.stats.find((item) => item.id === "alerts").value)} open alert(s) require review</li>
+          <li>Compliance status currently at ${escapeHtml(state.stats.find((item) => item.id === "score").value)}</li>
+        </ul>
+      </div>
+    `);
+  }
+
+  function openHistoryTool() {
+    openDrawer("History", "Recent activity in the dashboard", `
+      <div class="list">
+        <div class="doc-item"><strong>Assistant initialized</strong><div class="muted mt8">Tax knowledge pack loaded for GST research.</div></div>
+        <div class="doc-item"><strong>Initial question answered</strong><div class="muted mt8">Late filing and interest response created in chat.</div></div>
+        <div class="doc-item"><strong>Workspace active</strong><div class="muted mt8">Upload more files to build a richer matter history.</div></div>
+      </div>
+    `);
+  }
+
+  function openSettingsTool() {
+    openDrawer("Settings", "Dashboard controls and preferences", `
+      <div class="list">
+        <div class="doc-item">
+          <strong>Theme</strong>
+          <div class="muted mt8">Current theme: ${escapeHtml(state.theme)}</div>
+          <div class="tool-actions mt12">
+            <button class="tool-btn" id="drawerThemeToggle">Toggle theme</button>
+          </div>
+        </div>
+        <div class="doc-item">
+          <strong>Search</strong>
+          <div class="muted mt8">Use the search bar to jump to sections or turn a search into an AI question.</div>
+        </div>
+      </div>
+    `);
+  }
+
+  async function handleFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+
+    for (const file of files) {
+      const extension = (file.name.split(".").pop() || "").toLowerCase();
+      const textFriendly = ["txt", "csv", "json", "md", "html", "htm", "xml"].includes(extension);
+      const rawText = textFriendly ? await readFileAsText(file) : "";
+      const extracted = createDocumentSummary(rawText, file.name);
+      state.uploadedFiles.push(file.name);
+      state.documents.unshift({
+        name: file.name,
+        type: file.name.split(".").pop().toUpperCase() + " upload",
+        size: `${(file.size / 1024 / 1024 || 0.01).toFixed(2)} MB`,
+        pages: Math.max(1, Math.round(file.size / 18000)),
+        summary: extracted.summary,
+        excerpt: extracted.excerpt,
+        clauses: extracted.clauses,
+        content: extracted.content,
+        parseStatus: extracted.parseStatus
+      });
+    }
+
+    state.activeDocumentIndex = 0;
+    const count = state.documents.length;
+    updateStat("documents", String(count));
+    renderDocuments();
+    renderUploadFiles();
+    closeUploadModal();
+    notify("Upload complete", `${files.length} file(s) added to the workspace.`);
+    addMessage("ai", `
+      <strong>Upload complete.</strong>
+      <div class="mt8">I will now answer from <strong>${escapeHtml(getActiveDocument().name)}</strong> whenever the question relates to the uploaded document.</div>
+      <div class="citation">Source: Latest uploaded file</div>
+    `);
+  }
+
+  function renderUploadFiles() {
+    document.getElementById("uploadFiles").innerHTML = state.uploadedFiles.map((name) => `
+      <span class="file-chip">${escapeHtml(name)}</span>
+    `).join("");
+  }
+
+  function handleSearchSelection(kind, id) {
+    hideSearchResults();
+    if (kind === "nav") {
+      activateNav(id);
+      return;
+    }
+    if (kind === "tool") {
+      const tool = toolCards.find((item) => item.id === id);
+      if (tool) tool.action();
+      return;
+    }
+    if (kind === "document") {
+      showClauseExplorer(Number(id));
+    }
+  }
+
+  function activateNav(id) {
+    state.activeNav = id;
+    renderNav();
+    const item = navItems.find((nav) => nav.id === id);
+    if (item) item.action();
+  }
+
+  function bindEvents() {
+    window.addEventListener("resize", resizeCanvas);
+
+    document.getElementById("nav").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-nav]");
+      if (!button) return;
+      activateNav(button.dataset.nav);
+    });
+
+    document.getElementById("toolsGrid").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-tool]");
+      if (!button) return;
+      const tool = toolCards.find((item) => item.id === button.dataset.tool);
+      if (tool) tool.action();
+    });
+
+    document.getElementById("documentList").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-doc-action]");
+      if (!button) return;
+      const index = Number(button.dataset.docIndex);
+      const action = button.dataset.docAction;
+      if (action === "view") showClauseExplorer(index);
+      if (action === "highlight") {
+        const doc = state.documents[index];
+        state.activeDocumentIndex = index;
+        document.getElementById("highlightBox").innerHTML = `
+          <strong>${escapeHtml(doc.name)}</strong>
+          <div class="muted mt8">${escapeHtml(doc.excerpt)}</div>
+          <div class="tiny mt8">Key sections: ${escapeHtml(doc.clauses.join(", "))}</div>
+          <div class="tiny mt8">AI focus: ${doc.parseStatus === "ready" ? "Content loaded for answers" : "Metadata only"}</div>
+        `;
+        notify("Highlight updated", `${doc.name} is now the active document.`);
+      }
+    });
+
+    document.getElementById("checklist").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-check-index]");
+      if (!button) return;
+      const index = Number(button.dataset.checkIndex);
+      state.checklist[index].done = !state.checklist[index].done;
+      renderChecklist();
+      notify("Checklist changed", `${state.checklist[index].label} was updated.`);
+    });
+
+    document.getElementById("sendBtn").addEventListener("click", () => {
+      const input = document.getElementById("chatInput");
+      const question = input.value;
+      input.value = "";
+      askAssistant(question);
+    });
+
+    document.getElementById("chatInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        document.getElementById("sendBtn").click();
+      }
+    });
+
+    document.getElementById("searchBtn").addEventListener("click", () => {
+      const value = document.getElementById("searchInput").value.trim();
+      if (state.searchResults.length && document.getElementById("searchResults").classList.contains("show")) {
+        performSearch();
+        return;
+      }
+      askAssistant(value);
+      hideSearchResults();
+    });
+
+    document.getElementById("headerSearchBtn").addEventListener("click", () => {
+      document.getElementById("searchInput").focus();
+      performSearch();
+    });
+
+    document.getElementById("searchInput").addEventListener("input", performSearch);
+    document.getElementById("searchInput").addEventListener("focus", performSearch);
+    document.getElementById("searchInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const query = document.getElementById("searchInput").value.trim();
+        if (!query) return;
+        askAssistant(query);
+        hideSearchResults();
+      }
+    });
+
+    document.getElementById("searchResults").addEventListener("click", (event) => {
+      const item = event.target.closest("[data-search-kind]");
+      if (!item) return;
+      handleSearchSelection(item.dataset.searchKind, item.dataset.searchId);
+    });
+
+    document.getElementById("notificationBtn").addEventListener("click", toggleNotificationPanel);
+    document.getElementById("notificationPanel").addEventListener("click", (event) => {
+      const item = event.target.closest("[data-notification-index]");
+      if (!item) return;
+      const index = Number(item.dataset.notificationIndex);
+      const removed = state.notifications.splice(index, 1)[0];
+      renderNotifications();
+      notify("Notification cleared", removed.title);
+      if (!state.notifications.length) hideNotificationPanel();
+    });
+
+    document.getElementById("themeBtn").addEventListener("click", toggleTheme);
+    document.getElementById("openUploadBtn").addEventListener("click", openUploadModal);
+    document.getElementById("closeUploadBtn").addEventListener("click", closeUploadModal);
+    document.getElementById("chooseFilesBtn").addEventListener("click", () => document.getElementById("fileInput").click());
+    document.getElementById("fileInput").addEventListener("change", (event) => handleFiles(event.target.files));
+
+    document.getElementById("overlay").addEventListener("click", () => {
+      closeDrawer();
+      closeUploadModal();
+      document.getElementById("overlay").classList.remove("show");
+    });
+
+    document.getElementById("closeDrawerBtn").addEventListener("click", () => {
+      closeDrawer();
+      document.getElementById("overlay").classList.remove("show");
+    });
+
+    document.getElementById("clearChatBtn").addEventListener("click", () => {
+      seedMessages();
+      updateStat("questions", "1");
+      notify("Chat reset", "The starter conversation has been restored.");
+    });
+
+    document.body.addEventListener("click", (event) => {
+      if (event.target.id === "compareUploadShortcut") {
+        openUploadModal();
+      }
+      if (event.target.id === "drawerThemeToggle") {
+        toggleTheme();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      const inSearch = event.target.closest(".search-shell");
+      const inNotifications = event.target.closest(".header-actions");
+      if (!inSearch) hideSearchResults();
+      if (!inNotifications) hideNotificationPanel();
+    });
+  }
+
+  function init() {
+    resizeCanvas();
+    drawBackground();
+    renderNav();
+    renderStats();
+    renderDocuments();
+    renderChecklist();
+    renderAlerts();
+    renderTools();
+    renderFeatures();
+    renderNotifications();
+    renderUploadFiles();
+    seedMessages();
+    bindEvents();
+  }
+
+  init();
+</script>
+</body>
+</html>
